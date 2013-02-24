@@ -12,31 +12,29 @@
   1. [BlockServer与BlockMaster的通讯接口](#BlockServer与BlockMaster的通讯接口)
   1. [BlockMaster的服务接口](#BlockMaster的服务接口)
   1. [BlockServer的服务接口](#BlockServer的服务接口)
-  1. [暂先不设计NameServer](#暂先不设计NameServer)
 1. [Block的第一个版本的实现](#Block的第一个版本的实现)
   1. [先写单元测试](#先写单元测试)
-  1. [编码吧，这是一件愉快的事情](#编码吧，这是一件愉快的事情)
-  1. [注释？不好意思，我不太习惯写注释](#注释？不好意思，我不太习惯写注释)
-  1. [Block是必须是独立的，是完美的](#Block是必须是独立的，是完美的)
+  1. [编码是一件愉快的事情](#编码是一件愉快的事情)
+  1. [对代码风格的理解](#对代码风格的理解)
+  1. [Block是必须是独立完美的](#Block是必须是独立完美的)
 1. [BlockServer：容器与IO](#BlockServer：容器与IO)
   1. [BlockServer:Block的容器](#BlockServer:Block的容器)
   1. [BlockServer:数据的存取服务](#BlockServer:数据的存取服务)
-  1. [设计模式让我们的程序迸发智慧的光芒](#设计模式让我们的程序迸发智慧的光芒)
+  1. [设计模式让程序迸发智慧的光芒](#设计模式让程序迸发智慧的光芒)
 1. [实现第一个版本的FSClient](#实现第一个版本的FSClient)
   1. [呈现给用户的接口一定要简单易用](#呈现给用户的接口一定要简单易用)
   1. [越过障碍：mock一个BlockMaster](#越过障碍：mock一个BlockMaster)
-  1. [激动人心的时刻：FSClient可以读写数据了](#激动人心的时刻：FSClient可以读写数据了)
+  1. [第一次Server、Client联调](#第一次Server、Client联调)
 1. [BlockMaster的实现](#BlockMaster的实现)
-  1. [真正考验我们的时刻](#真正考验我们的时刻)
-  1. [从数据结构开始](#从数据结构开始)
-  1. [不要破窗，一定不要破窗](#不要破窗，一定不要破窗)
-  1. [不解决SPOF我们就不是真正的分布式系统](#不解决SPOF我们就不是真正的分布式系统)
+  1. [BlockServer的详细设计](#BlockServer的详细设计)
+  1. [BlockServer数据结构设计](#BlockServer数据结构设计)
+  1. [坚守代码质量](#坚守代码质量)
+  1. [设计BlockServer备份节点](#设计BlockServer备份节点)
 1. [联调](#联调)
   1. [用BlockMaster替掉mock的那个](#用BlockMaster替掉mock的那个)
-  1. [和自己联调是一件有趣的事情](#和自己联调是一件有趣的事情)
-  1. [又一个激动人心的时刻](#又一个激动人心的时刻)
+  1. [第二次Server、Client联调](#第二次Server、Client联调)
+  1. [分布式系统初步可用](#分布式系统初步可用)
 1. [补课](#补课)
-  1. [前面都是骨骼，本章是血肉之躯](#前面都是骨骼，本章是血肉之躯)
   1. [config是一个重要的模块，而不是一个static final域]
   1. [Block的压缩、多备份](#Block的压缩、多备份)
   1. [BlockMaster对集群变动的管理](#BlockMaster对集群变动的管理)
@@ -45,9 +43,9 @@
   1. [从Block支持NIO开始](#从Block支持NIO开始)
   1. [设计模式：NIO、非NIO和谐共处](#设计模式：NIO、非NIO和谐共处)
   1. [对client端而言，NIO只是一种可选的传输方式](#对client端而言，NIO只是一种可选的传输方式)
-1. [NameServer:逃是逃不掉的](#NameServer:逃是逃不掉的)
+1. [NameServer的设计与实现](#NameServer的设计与实现)
   1. [变相偷懒：要学会假设](#变相偷懒：要学会假设)
-  1. [编码编码](#编码编码)
+  1. [NameServer的设计与实现](#NameServer的设计与实现)
   1. [偷懒变成了高级特性](#偷懒变成了高级特性)
 1. [NameServer:一个完整的分布式系统出炉了](#NameServer:一个完整的分布式系统出炉了)
   1. [功能测试：release前捕杀bug的最后机会](#功能测试：release前捕杀bug的最后机会)
@@ -99,10 +97,6 @@ Client端需要从BlockMaster获取Block的位置信息。然后据此找相应�
 ###BlockServer的服务接口
 BlockServer需要为Client提供数据的读写服务。
 
-<a name="暂先不设计NameServer"></a>
-###暂先不设计NameServer
-这里偷个懒吧，没有NameServer,我们的服务可以照样run。
-
 <a name="Block的第一个版本的实现"></a>
 Block的第一个版本的实现
 --------------------------------------
@@ -112,16 +106,16 @@ Block的第一个版本的实现
 
 Block的实现得用到input stream和output stream，需要在TestCase里面实现两个mock的stream。这两个stream具有通用性，那么我们就为TestCase提出一个基类，把stream放进去。
 
-<a name="编码吧，这是一件愉快的事情"></a>
-###编码吧，这是一件愉快的事情
+<a name="编码是一件愉快的事情"></a>
+###编码是一件愉快的事情
 对于非常明确的设计，实现一定要写的漂亮点。
 
-<a name="注释？不好意思，我不太习惯写注释"></a>
-###注释？不好意思，我不太习惯写注释
+<a name="对代码风格的理解"></a>
+###对代码风格的理解
 整洁的代码是最好的注释。
 
-<a name="Block是必须是独立的，是完美的"></a>
-###Block是必须是独立的，是完美的
+<a name="Block是必须是独立完美的"></a>
+###Block是必须是独立完美的
 对于整个系统来说，Block是一个原子性的类型，除了暴露出来的接口供BlockServer调用，我们可以对它一无所知。但是进入Block内部，它却是一个完整的、复杂的个体，有数据、index，内存索引等等。这就是封装。
 
 <a name="BlockServer：容器与IO"></a>
@@ -135,8 +129,8 @@ BlockServer：容器与IO
 ###BlockServer:数据的存取服务
 数据的读写：先通过BlockServer找到Block，然后对Block中的某部分数据做读写访问。
 
-<a name="设计模式让我们的程序迸发智慧的光芒"></a>
-###设计模式让我们的程序迸发智慧的光芒
+<a name="设计模式让程序迸发智慧的光芒"></a>
+###设计模式让程序迸发智慧的光芒
 盘点BlockServer中用到的设计模式。
 
 <a name="实现第一个版本的FSClient"></a>
@@ -150,27 +144,27 @@ BlockServer：容器与IO
 ###越过障碍：mock一个BlockMaster
 没有BlockMaster，client还是跑不起来。这件事情好办，为了能尽快跑起来，我们mock一个BlockMaster。
 
-<a name="激动人心的时刻：FSClient可以读写数据了"></a>
-###激动人心的时刻：FSClient可以读写数据了
+<a name="第一次Server、Client联调"></a>
+###第一次Server、Client联调
 
 
 <a name="BlockMaster的实现"></a>
 BlockMaster的实现
 ----------------------------------------
-<a name="真正考验我们的时刻"></a>
-###真正考验我们的时刻
+<a name="BlockServer的详细设计"></a>
+###BlockServer的详细设计
 BlockServer的详细设计，数据结构、消息同步、并发访问、异常处理、SPOF等等的都来了。
 
-<a name="从数据结构开始"></a>
-###从数据结构开始
+<a name="BlockServer数据结构设计"></a>
+###BlockServer数据结构设计
 Block信息的存放；Block与BlockServer的映射关系及索引；
 
-<a name="不要破窗，一定不要破窗"></a>
-###不要破窗，一定不要破窗
+<a name="坚守代码质量"></a>
+###坚守代码质量
 在到了最艰难的时刻，一定要坚守代码的质量，一定不要屈从于尽快搞定的快感，而写一些ugly的代码。
 
-<a name="不解决SPOF我们就不是真正的分布式系统"></a>
-###不解决SPOF我们就不是真正的分布式系统
+<a name="设计BlockServer备份节点"></a>
+###设计BlockServer备份节点
 有单点的系统不是真正的分布式系统，所以一定要消除单点。那就为BlockServer设计备份节点吧...
 
 <a name="联调"></a>
@@ -180,19 +174,17 @@ Block信息的存放；Block与BlockServer的映射关系及索引；
 ###用BlockMaster替掉mock的那个
 基本组件已经全部完成了。
 
-<a name="和自己联调是一件有趣的事情"></a>
-###和自己联调是一件有趣的事情
+<a name="第二次Server、Client联调"></a>
+###第二次Server、Client联调
 
 
-<a name="又一个激动人心的时刻"></a>
-###又一个激动人心的时刻
+<a name="分布式系统初步可用"></a>
+###分布式系统初步可用
 我们的分布式系统已经可以用了诶
 
 <a name="补课"></a>
 补课
 ----------------------------------------
-<a name="前面都是骨骼，本章是血肉之躯"></a>
-###前面都是骨骼，本章是血肉之躯
 
 <a name="config是一个重要的模块，而不是一个static final域"></a>
 ###config是一个重要的模块，而不是一个static final域
@@ -220,14 +212,14 @@ Block信息的存放；Block与BlockServer的映射关系及索引；
 Server端已是天翻地覆；对客户端接口而言，变化的只是数据传输时的一个不起眼的参数而已。“对你好而不让你知道”，对于一个分布式系统的码农而言，这是一种最酷的感情表达方式。
 
 
-<a name="NameServer:逃是逃不掉的"></a>
-NameServer:逃是逃不掉的
+<a name="NameServer的设计与实现"></a>
+NameServer的设计与实现
 ------------------------------------------
 <a name="变相偷懒：要学会假设"></a>
 ###变相偷懒：要学会假设
 
-<a name="编码编码"></a>
-###编码编码
+<a name="NameServer的设计与实现"></a>
+###NameServer的设计与实现
 
 <a name="偷懒变成了高级特性"></a>
 ###偷懒变成了高级特性
